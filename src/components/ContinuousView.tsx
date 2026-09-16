@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import { DocumentQrConfig, Language } from '../types';
+import { DocumentQrOverlay } from './DocumentQrOverlay';
 
 interface ContinuousViewProps {
   pdfDoc: PDFDocumentProxy | null;
@@ -8,6 +10,9 @@ interface ContinuousViewProps {
   rotation: number;
   onVisiblePageChange: (pageNum: number) => void;
   totalPages: number;
+  qrConfig?: DocumentQrConfig;
+  lang?: Language;
+  onOpenQrSettings?: () => void;
 }
 
 interface PageItemProps {
@@ -17,6 +22,9 @@ interface PageItemProps {
   scale: number;
   rotation: number;
   onIntersect: (pageNum: number) => void;
+  qrConfig?: DocumentQrConfig;
+  lang?: Language;
+  onOpenQrSettings?: () => void;
 }
 
 const ContinuousPageItem: React.FC<PageItemProps> = ({
@@ -26,6 +34,9 @@ const ContinuousPageItem: React.FC<PageItemProps> = ({
   scale,
   rotation,
   onIntersect,
+  qrConfig,
+  lang = 'ar',
+  onOpenQrSettings,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -135,20 +146,13 @@ const ContinuousPageItem: React.FC<PageItemProps> = ({
         ) : (
           <canvas ref={canvasRef} className="block" />
         )}
-        {pageNumber === 1 && (
-          <a
-            id="continuous-cert-qr-hotspot"
-            href={typeof window !== 'undefined' ? window.location.origin.replace('ais-dev-', 'ais-pre-') : '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="رمز الاستجابة السريعة (الباركود) لبوابة التحقق الرسمية - انقر لفتح أو فحص الرابط"
-            className="absolute z-10 rounded-xs transition-all hover:ring-2 hover:ring-[#003865]/60 hover:bg-[#003865]/10 cursor-pointer"
-            style={{
-              left: '43.39%',
-              top: '54.22%',
-              width: '9.11%',
-              height: '6.44%',
-            }}
+        {/* Working In-Document QR Code on first page */}
+        {pageNumber === 1 && qrConfig && (
+          <DocumentQrOverlay
+            config={qrConfig}
+            lang={lang}
+            onOpenSettings={onOpenQrSettings || (() => {})}
+            isReadOnly={true}
           />
         )}
         {!isRendered && (
@@ -171,6 +175,9 @@ export const ContinuousView: React.FC<ContinuousViewProps> = ({
   rotation,
   onVisiblePageChange,
   totalPages,
+  qrConfig,
+  lang,
+  onOpenQrSettings,
 }) => {
   if (!pdfDoc && !imageSrc) return null;
 
@@ -190,6 +197,9 @@ export const ContinuousView: React.FC<ContinuousViewProps> = ({
           scale={scale}
           rotation={rotation}
           onIntersect={onVisiblePageChange}
+          qrConfig={qrConfig}
+          lang={lang}
+          onOpenQrSettings={onOpenQrSettings}
         />
       ))}
     </main>

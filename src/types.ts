@@ -43,3 +43,23 @@ export interface VerificationDetails {
   customerRef: string;
 }
 
+export type QrPositionPreset =
+  | 'cert-default'
+  | 'bottom-right'
+  | 'bottom-left'
+  | 'top-right'
+  | 'top-left'
+  | 'custom';
+
+export interface DocumentQrConfig {
+  enabled: boolean;
+  url: string;
+  position: QrPositionPreset;
+  customX: number; // percentage (0 - 100)
+  customY: number; // percentage (0 - 100)
+  sizePercent: number; // percentage width of document (default 9.11%)
+  theme: 'adib' | 'classic' | 'emerald';
+  showBadge: boolean;
+  burnInPdf: boolean;
+}
+

@@ -72,4 +72,12 @@ html, body {
     padding: 0 !important;
     page-break-after: always;
   }
+  #in-document-qr-container {
+    display: block !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  #in-document-qr-container .no-print {
+    display: none !important;
+  }
 }

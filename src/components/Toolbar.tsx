@@ -23,6 +23,7 @@ import {
   FileSignature,
   Sparkles,
   EyeOff,
+  FolderGit2,
 } from 'lucide-react';
 import { FitMode, ViewMode, Language } from '../types';
 
@@ -48,6 +49,8 @@ interface ToolbarProps {
   onOpenSearchModal: () => void;
   onOpenSaveWebPageModal?: () => void;
   onOpenQrModal?: () => void;
+  onOpenDocumentQrModal?: () => void;
+  onOpenGitHubModal?: () => void;
   onOpenDriveModal?: () => void;
   onOpenFontFidelityModal?: () => void;
   onToggleFidelityMode?: () => void;
@@ -79,6 +82,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onOpenSearchModal,
   onOpenSaveWebPageModal,
   onOpenQrModal,
+  onOpenDocumentQrModal,
+  onOpenGitHubModal,
   onOpenDriveModal,
   onOpenFontFidelityModal,
   onToggleFidelityMode,
@@ -407,6 +412,32 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <path d="M73.55 76.8H27.5L13.75 53h59.8c0 1.55-.4 3.1-1.2 4.5z" fill="#2684fc"/>
               </svg>
               <span className="hidden xl:inline">Drive</span>
+            </button>
+          )}
+
+          {/* In-Document QR Code Settings Button */}
+          {onOpenDocumentQrModal && (
+            <button
+              id="btn-toolbar-in-doc-qr"
+              onClick={onOpenDocumentQrModal}
+              className="px-2.5 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 font-semibold text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              title={isAr ? 'تخصيص رمز QR الفعّال داخل صفحة الوثيقة والـ PDF' : 'Configure working QR code inside document & PDF'}
+            >
+              <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">{isAr ? 'رمز QR بالوثيقة' : 'In-Doc QR'}</span>
+            </button>
+          )}
+
+          {/* GitHub Export / Push Button */}
+          {onOpenGitHubModal && (
+            <button
+              id="btn-toolbar-github-export"
+              onClick={onOpenGitHubModal}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-semibold text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+              title={isAr ? 'رفع وحفظ التغييرات على موقع GitHub' : 'Push and export changes to GitHub'}
+            >
+              <FolderGit2 className="w-3.5 h-3.5 text-slate-300" />
+              <span className="hidden md:inline">GitHub</span>
             </button>
           )}
 

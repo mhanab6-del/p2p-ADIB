@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
 import { ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
-import { FitMode } from '../types';
+import { FitMode, DocumentQrConfig, Language } from '../types';
+import { DocumentQrOverlay } from './DocumentQrOverlay';
 
 interface PdfCanvasProps {
   pdfDoc: PDFDocumentProxy | null;
@@ -16,6 +17,10 @@ interface PdfCanvasProps {
   onPrevPage: () => void;
   totalPages: number;
   onUploadImageClick?: () => void;
+  qrConfig?: DocumentQrConfig;
+  lang?: Language;
+  onOpenQrSettings?: () => void;
+  onUpdateQrPosition?: (x: number, y: number) => void;
 }
 
 export const PdfCanvas: React.FC<PdfCanvasProps> = ({
@@ -31,6 +36,10 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
   onPrevPage,
   totalPages,
   onUploadImageClick,
+  qrConfig,
+  lang = 'ar',
+  onOpenQrSettings,
+  onUpdateQrPosition,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -298,21 +307,13 @@ export const PdfCanvas: React.FC<PdfCanvasProps> = ({
             />
           )}
 
-          {/* Interactive QR Code Hotspot (Links directly to the portal) - only if default image/cert */}
-          {imageSrc === '/44.jpg' && (
-            <a
-              id="pdf-cert-qr-hotspot"
-              href={typeof window !== 'undefined' ? window.location.origin.replace('ais-dev-', 'ais-pre-') : '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="رمز الاستجابة السريعة (الباركود) للتحقق من الشهادة - انقر لفتح بوابة التحقق أو نسخه"
-              className="absolute z-10 rounded-xs transition-all hover:ring-2 hover:ring-[#003865]/60 hover:bg-[#003865]/10 cursor-pointer"
-              style={{
-                left: '43.39%',
-                top: '54.22%',
-                width: '9.11%',
-                height: '6.44%',
-              }}
+          {/* Working In-Document QR Code (embedded directly in document canvas) */}
+          {qrConfig && (
+            <DocumentQrOverlay
+              config={qrConfig}
+              lang={lang}
+              onOpenSettings={onOpenQrSettings || (() => {})}
+              onUpdatePosition={onUpdateQrPosition}
             />
           )}
 

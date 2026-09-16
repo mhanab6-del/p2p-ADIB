@@ -10,10 +10,12 @@ import { QuickPageSearch } from './components/QuickPageSearch';
 import { VerificationModal } from './components/VerificationModal';
 import { SaveWebPageModal } from './components/SaveWebPageModal';
 import { QrCodeModal } from './components/QrCodeModal';
+import { DocumentQrSettingsModal } from './components/DocumentQrSettingsModal';
+import { GitHubModal } from './components/GitHubModal';
 import { FontFidelityModal } from './components/FontFidelityModal';
 import { GoogleDriveModal } from './components/GoogleDriveModal';
 import { AdibFooter } from './components/AdibFooter';
-import { DocumentMeta, FitMode, ViewMode, Language, VerificationDetails } from './types';
+import { DocumentMeta, FitMode, ViewMode, Language, VerificationDetails, DocumentQrConfig } from './types';
 import { downloadImageAsPdf, convertImageToPdfBytes } from './lib/pdfExport';
 import {
   saveCustomPdf,
@@ -63,9 +65,26 @@ export default function App() {
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [isSaveWebPageModalOpen, setIsSaveWebPageModalOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isDocumentQrModalOpen, setIsDocumentQrModalOpen] = useState(false);
+  const [isGitHubModalOpen, setIsGitHubModalOpen] = useState(false);
   const [isDriveModalOpen, setIsDriveModalOpen] = useState(false);
   const [isFontFidelityModalOpen, setIsFontFidelityModalOpen] = useState(false);
   const [isCustomFileLoaded, setIsCustomFileLoaded] = useState(false);
+
+  // In-Document Working QR Code configuration
+  const [documentQrConfig, setDocumentQrConfig] = useState<DocumentQrConfig>({
+    enabled: true,
+    url: typeof window !== 'undefined'
+      ? `${window.location.origin.replace('ais-dev-', 'ais-pre-')}/?REF=26/472376/70672211/HFO&VERIFIED=1`
+      : 'https://ais-pre-s6y6mnm65sq3dngliprppi-171172990740.europe-west2.run.app/?REF=26/472376/70672211/HFO&VERIFIED=1',
+    position: 'cert-default',
+    customX: 43.39,
+    customY: 54.22,
+    sizePercent: 9.11,
+    theme: 'adib',
+    showBadge: true,
+    burnInPdf: true,
+  });
 
   // Document metadata & active raw data for downloading / printing
   const [documentMeta, setDocumentMeta] = useState<DocumentMeta>({
@@ -487,8 +506,8 @@ export default function App() {
       try {
         setToastMessage(lang === 'ar' ? 'جاري تجهيز المستند وتحميله بصيغة PDF...' : 'Preparing PDF download...');
         
-        // If default official certificate image
-        if (imageSrc === '/44.jpg') {
+        // If default official certificate image and burn-in is not forced
+        if (imageSrc === '/44.jpg' && !documentQrConfig.burnInPdf) {
           try {
             const res = await fetch('/Mohamed_Abdulla_Verfication.pdf');
             if (res.ok) {
@@ -510,9 +529,14 @@ export default function App() {
           }
         }
 
-        // Universal high-quality image-to-PDF generation
-        await downloadImageAsPdf(imageSrc, documentMeta.fileName || 'ADIB_No_Liability_Certificate.pdf', documentMeta.title);
-        setToastMessage(lang === 'ar' ? 'تم تحميل المستند بصيغة PDF بنجاح' : 'Document PDF downloaded successfully');
+        // Universal high-quality image-to-PDF generation with embedded scannable QR
+        await downloadImageAsPdf(
+          imageSrc,
+          documentMeta.fileName || 'ADIB_No_Liability_Certificate.pdf',
+          documentMeta.title,
+          documentQrConfig
+        );
+        setToastMessage(lang === 'ar' ? 'تم تحميل المستند بصيغة PDF مع رمز الـ QR بنجاح' : 'Document PDF with QR downloaded successfully');
         return;
       } catch (err) {
         console.error('PDF export error:', err);
@@ -554,7 +578,7 @@ export default function App() {
 
   const getCurrentPdfBlob = async (): Promise<Blob> => {
     if (imageSrc && !pdfDoc) {
-      if (imageSrc === '/44.jpg') {
+      if (imageSrc === '/44.jpg' && !documentQrConfig.burnInPdf) {
         try {
           const res = await fetch('/Mohamed_Abdulla_Verfication.pdf');
           if (res.ok) {
@@ -565,7 +589,7 @@ export default function App() {
           // fallback
         }
       }
-      const bytes = await convertImageToPdfBytes(imageSrc, documentMeta.title);
+      const bytes = await convertImageToPdfBytes(imageSrc, documentMeta.title, documentQrConfig);
       return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
     }
 
@@ -654,6 +678,8 @@ export default function App() {
         verification={verification}
         onOpenDetailsModal={() => setIsVerificationModalOpen(true)}
         onOpenQrModal={() => setIsQrModalOpen(true)}
+        onOpenDocumentQrModal={() => setIsDocumentQrModalOpen(true)}
+        onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
         onOpenDriveModal={() => setIsDriveModalOpen(true)}
         isToolbarVisible={isToolbarVisible}
         onToggleToolbar={handleToggleToolbar}
@@ -684,6 +710,8 @@ export default function App() {
             onOpenSearchModal={() => setIsSearchOpen(true)}
             onOpenSaveWebPageModal={() => setIsSaveWebPageModalOpen(true)}
             onOpenQrModal={() => setIsQrModalOpen(true)}
+            onOpenDocumentQrModal={() => setIsDocumentQrModalOpen(true)}
+            onOpenGitHubModal={() => setIsGitHubModalOpen(true)}
             onOpenDriveModal={() => setIsDriveModalOpen(true)}
             onOpenFontFidelityModal={() => setIsFontFidelityModalOpen(true)}
             onToggleFidelityMode={() => {
@@ -797,6 +825,17 @@ export default function App() {
             onUploadImageClick={() => {
               document.getElementById('btn-upload-image-toolbar')?.click();
             }}
+            qrConfig={documentQrConfig}
+            lang={lang}
+            onOpenQrSettings={() => setIsDocumentQrModalOpen(true)}
+            onUpdateQrPosition={(x, y) => {
+              setDocumentQrConfig((prev) => ({
+                ...prev,
+                position: 'custom',
+                customX: x,
+                customY: y,
+              }));
+            }}
           />
         ) : (
           <ContinuousView
@@ -806,6 +845,17 @@ export default function App() {
             rotation={rotation}
             onVisiblePageChange={(p) => setCurrentPage(p)}
             totalPages={totalPages}
+            qrConfig={documentQrConfig}
+            lang={lang}
+            onOpenQrSettings={() => setIsDocumentQrModalOpen(true)}
+            onUpdateQrPosition={(x, y) => {
+              setDocumentQrConfig((prev) => ({
+                ...prev,
+                position: 'custom',
+                customX: x,
+                customY: y,
+              }));
+            }}
           />
         )}
       </main>
@@ -871,6 +921,23 @@ export default function App() {
       <QrCodeModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}
+        lang={lang}
+      />
+
+      {/* Document In-Page Working QR Settings Modal */}
+      <DocumentQrSettingsModal
+        isOpen={isDocumentQrModalOpen}
+        onClose={() => setIsDocumentQrModalOpen(false)}
+        config={documentQrConfig}
+        onChangeConfig={(newConfig) => setDocumentQrConfig(newConfig)}
+        lang={lang}
+        verificationRef={verification.refNumber}
+      />
+
+      {/* GitHub Repository Push & Sync Modal */}
+      <GitHubModal
+        isOpen={isGitHubModalOpen}
+        onClose={() => setIsGitHubModalOpen(false)}
         lang={lang}
       />
 
