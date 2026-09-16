@@ -153,12 +153,25 @@ export const DocumentQrOverlay: React.FC<DocumentQrOverlayProps> = ({
     }
   };
 
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // If not dragging in custom mode, clicking directly navigates to the QR target URL
+    if (isDragging) return;
+    // Don't open if target was one of the toolbar action buttons
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) return;
+
+    if (config.url) {
+      window.open(config.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div
       id="in-document-qr-container"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseDown={handleMouseDown}
+      onClick={handleContainerClick}
       className={`absolute z-20 select-none group transition-all duration-100 ${
         config.position === 'custom' && !isReadOnly ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
       }`}
@@ -168,6 +181,7 @@ export const DocumentQrOverlay: React.FC<DocumentQrOverlayProps> = ({
         width: `${widthPercent}%`,
         height: `${heightPercent}%`,
       }}
+      title={isAr ? 'انقر لفتح رابط التحقق الرسمي من الوثيقة مباشرة' : 'Click to open document verification link'}
     >
       {/* Real scannable QR Image embedded inside the document */}
       <div

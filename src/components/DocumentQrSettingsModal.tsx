@@ -87,7 +87,7 @@ export const DocumentQrSettingsModal: React.FC<DocumentQrSettingsModalProps> = (
 
   const getLiveDefaultUrl = () => {
     if (typeof window === 'undefined') return '';
-    const origin = window.location.origin.replace('ais-dev-', 'ais-pre-');
+    const origin = window.location.origin;
     return `${origin}/?REF=26/472376/70672211/HFO&VERIFIED=1`;
   };
 

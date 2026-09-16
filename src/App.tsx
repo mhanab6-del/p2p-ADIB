@@ -72,18 +72,21 @@ export default function App() {
   const [isCustomFileLoaded, setIsCustomFileLoaded] = useState(false);
 
   // In-Document Working QR Code configuration
-  const [documentQrConfig, setDocumentQrConfig] = useState<DocumentQrConfig>({
-    enabled: true,
-    url: typeof window !== 'undefined'
-      ? `${window.location.origin.replace('ais-dev-', 'ais-pre-')}/?REF=26/472376/70672211/HFO&VERIFIED=1`
-      : 'https://ais-pre-s6y6mnm65sq3dngliprppi-171172990740.europe-west2.run.app/?REF=26/472376/70672211/HFO&VERIFIED=1',
-    position: 'cert-default',
-    customX: 43.39,
-    customY: 54.22,
-    sizePercent: 9.11,
-    theme: 'adib',
-    showBadge: true,
-    burnInPdf: true,
+  const [documentQrConfig, setDocumentQrConfig] = useState<DocumentQrConfig>(() => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return {
+      enabled: true,
+      url: origin
+        ? `${origin}/?REF=26/472376/70672211/HFO&VERIFIED=1`
+        : '/?REF=26/472376/70672211/HFO&VERIFIED=1',
+      position: 'cert-default',
+      customX: 43.39,
+      customY: 54.22,
+      sizePercent: 9.11,
+      theme: 'adib',
+      showBadge: true,
+      burnInPdf: true,
+    };
   });
 
   // Document metadata & active raw data for downloading / printing
@@ -110,11 +113,22 @@ export default function App() {
       });
   }, []);
 
-  // Decode URL params if present (e.g. ?QR=...)
+  // Decode URL params if present (e.g. ?QR=... or ?REF=...&VERIFIED=1)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const qrParam = params.get('QR');
-    if (qrParam) {
+    const directRef = params.get('REF');
+    const directVerified = params.get('VERIFIED');
+
+    if (directRef) {
+      setVerification((prev) => ({
+        ...prev,
+        refNumber: directRef,
+      }));
+      if (directVerified === '1' || directVerified === 'true') {
+        setIsVerificationModalOpen(true);
+      }
+    } else if (qrParam) {
       try {
         const decoded = atob(qrParam);
         const subParams = new URLSearchParams(decoded);
